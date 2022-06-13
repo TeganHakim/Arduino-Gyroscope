@@ -9,32 +9,43 @@ data = pd.read_csv("data.csv")
 x = data['time']
 y = data['roll']
 
-# x = x.reshape(len(x),1)
-# y = y.reshape(len(y),1)
+x_data = []
+y_data = []
 
-# Split the data into training/testing sets
-x_train = x[:-250]
-x_test = x[-250:]
-
-# Split the targets into training/testing sets
-y_train = y[:-250]
-y_test = y[-250:]
+for i in range(len(data)):
+    x_data.append([x[i]])
+    y_data.append([y[i]])
 
 # Plot outputs
-plt.scatter(x_test, y_test,  color='black')
-plt.title('Test Data')
-plt.xlabel('Size')
-plt.ylabel('Price')
-plt.xticks(())
-plt.yticks(())
+plt.scatter(x_data, y_data, color = 'black')
+plt.title('Gyroscope Data')
+plt.xlabel('Time')
+plt.ylabel('Roll')
+plt.xticks(([i for i in range(len(data)) if i % 25 == 0]))
+plt.yticks(([i for i in range(-180, 180) if i % 25 == 0]))
 
 # Create linear regression object
 regr = LinearRegression()
 
-# Train the model using the training sets
-regr.fit(x_train, y_train)
+# Train the model
+regr.fit(x_data, y_data)
 
 # Plot outputs
-plt.plot(x_test, regr.predict(x_test), color='red',linewidth=3)
+plt.plot(x_data, regr.predict(x_data), color = 'red', linewidth = 3)
+
+# Residuals = Observed Value - Predicted Value
+residuals = {"x": [], "y": []}
+for i in range(len(data)):
+  residuals["x"].append(x_data[i])
+  residuals["y"].append(y_data[i])
+  residuals["x"].append(x_data[i])
+  residuals["y"].append(regr.predict(x_data)[i])
+
+# Generate coorelation coefficient
+r = regr.coef_[0][0]
+plt.text((len(x_data) / 2 ) - 20, -90, "r = " + str(round(r, 3)), fontsize = 10)
+
+# Plot residual lines
+plt.plot(residuals["x"], residuals["y"], color = "orange", linewidth = 1)
 
 plt.show()
