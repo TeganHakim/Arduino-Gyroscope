@@ -17,34 +17,37 @@ ROLL_RADIUS = 180
 ERROR_DIST = 25.0
 
 # Load CSV of Gyroscope Data
-df = pd.read_csv("../data.csv")
+df = pd.read_csv("../test_data.csv")
 
-# Seperate axis (x, y) into distinct data frames
+# Seperate axis (x, y, z) into distinct data frames
 x = df['time']
 y = df['roll']
+z = df['yaw']
 
-# Initialize datasets & Populate w/ (x,y)
+# Initialize datasets & Populate w/ (x, y, z)
 x_data = []
 y_data = []
+z_data = []
 
 for i in range(len(df)):
     x_data.append([x[i]])
     y_data.append([y[i]])
+    z_data.append([z[i]])
 
 # Graph raw data
-graph.plot_raw_outputs(df, x_data, y_data, ROLL_RADIUS)
+fig, axs = graph.plot_raw_outputs(df, x_data, y_data, z_data, ROLL_RADIUS)
 
 # Graph residuals
-graph.residuals(df, x_data, y_data)
+graph.residuals(df, axs, x_data, y_data, z_data)
 
 # Graph details
-graph.details(x_data, y_data, ROLL_RADIUS)
+graph.details(axs, x_data, y_data, z_data, ROLL_RADIUS)
 
 # Calculate intersection of line and x-axis for chunk detection
-idx = graph.point_intersection(df, x, y)
+idx = graph.point_intersection(df, fig, axs, x, y, z)
 
 # Chunking algorithm
-chunks = graph.chunk(df, idx, ERROR_DIST)
+chunks = graph.chunk(df, axs, idx, ERROR_DIST)
 
 # Graph chunks
 graph.draw_chunks(chunks)
