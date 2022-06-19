@@ -133,6 +133,8 @@ def chunk(df, axs, idx, ERROR_DIST):
 def draw_chunks(chunks):     
     num_plots_y = math.ceil(len(chunks["y"]) / 2.) * 2
     num_plots_z = math.ceil(len(chunks["z"]) / 2.) * 2
+    roll_y_predicted = 0
+    yaw_y_predicted = 0
 
     # Create the figure of Roll Data Chunks
     plt.figure("Chunks - Roll")
@@ -149,8 +151,8 @@ def draw_chunks(chunks):
             poly_features = poly.fit_transform(np.array(chunks["y"][int(j + row)]["time"]).reshape(-1, 1))
             poly_reg_model = LinearRegression()
             poly_reg_model.fit(poly_features, chunks["y"][int(j + row)]["roll"])
-            y_predicted = poly_reg_model.predict(poly_features)
-            plt.plot(np.array(chunks["y"][int(j + row)]["time"]), y_predicted, color = "red", linewidth = 3)
+            roll_y_predicted = poly_reg_model.predict(poly_features)
+            plt.plot(np.array(chunks["y"][int(j + row)]["time"]), roll_y_predicted, color = "red", linewidth = 3)
 
             # R-squared value (coorelation coefficient) to determine if the Roll follows an ideal path
             r_squared = poly_reg_model.score(poly_features, chunks["y"][int(j + row)]["roll"])            
@@ -175,15 +177,36 @@ def draw_chunks(chunks):
             poly_features = poly.fit_transform(np.array(chunks["z"][int(j + row)]["time"]).reshape(-1, 1))
             poly_reg_model = LinearRegression()
             poly_reg_model.fit(poly_features, chunks["z"][int(j + row)]["yaw"])
-            y_predicted = poly_reg_model.predict(poly_features)
-            plt.plot(np.array(chunks["z"][int(j + row)]["time"]), y_predicted, color = "red", linewidth = 3)
+            yaw_y_predicted = poly_reg_model.predict(poly_features)
+            plt.plot(np.array(chunks["z"][int(j + row)]["time"]), yaw_y_predicted, color = "red", linewidth = 3)
 
             # R-squared value (coorelation coefficient) to determine if the Yaw follows an ideal path
             r_squared = poly_reg_model.score(poly_features, chunks["z"][int(j + row)]["yaw"])            
             plt.rcParams.update({'font.size': 6})
             plt.title("r² = " + str(round(r_squared, 3)), fontsize = 13, fontweight = "bold",)
 
+    predictions = {"roll": roll_y_predicted, "yaw": yaw_y_predicted}
+
     # Save Yaw Chunks     
     plt.savefig("../tests/chunks-yaw.png")
 
+    return predictions
+
+# Evaluate all chunks
+def evaluate_chunks(fig, predictions):
+    # Find Steering Ratio and Map values using crazy fucking syntax
+    ratio = ((sum(map(lambda x: abs(x), list(predictions["roll"]))) / len(predictions["roll"])) / (sum(map(lambda x: abs(x), list(predictions["yaw"]))) / len(predictions["yaw"])))
+    fig.text(0.416, 0.925, "Steering Ratio: " + str(round(ratio, 3)) + ":1", fontsize = 14, fontweight = "bold")
+
+    # Find the error in the predictions
+    # avg_roll = ((sum(map(lambda x: abs(x), list(predictions["roll"])))) / len(predictions["roll"]))
+    # avg_yaw = ((sum(map(lambda x: abs(x) * ratio, list(predictions["yaw"])))) / len(predictions["yaw"]))
+    # if (avg_roll > avg_yaw):
+    #     error = avg_roll - avg_yaw
+    # else:
+    #     error = avg_yaw - avg_roll    
+    # print(error)
+
+# Show all plots
+def show_plots():
     plt.show()
