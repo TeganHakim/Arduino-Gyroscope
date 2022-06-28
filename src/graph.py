@@ -136,6 +136,8 @@ def draw_chunks(chunks):
     roll_y_predicted = 0
     yaw_y_predicted = 0
 
+    r_values = {"y": [], "z": []}
+
     # Create the figure of Roll Data Chunks
     plt.figure("Chunks - Roll")
     for i in range(2):
@@ -155,7 +157,8 @@ def draw_chunks(chunks):
             plt.plot(np.array(chunks["y"][int(j + row)]["time"]), roll_y_predicted, color = "red", linewidth = 3)
 
             # R-squared value (coorelation coefficient) to determine if the Roll follows an ideal path
-            r_squared = poly_reg_model.score(poly_features, chunks["y"][int(j + row)]["roll"])            
+            r_squared = poly_reg_model.score(poly_features, chunks["y"][int(j + row)]["roll"])  
+            r_values["y"].append(r_squared)          
             plt.rcParams.update({'font.size': 6})
             plt.title("r² = " + str(round(r_squared, 3)), fontsize = 13, fontweight = "bold", )
 
@@ -181,7 +184,8 @@ def draw_chunks(chunks):
             plt.plot(np.array(chunks["z"][int(j + row)]["time"]), yaw_y_predicted, color = "red", linewidth = 3)
 
             # R-squared value (coorelation coefficient) to determine if the Yaw follows an ideal path
-            r_squared = poly_reg_model.score(poly_features, chunks["z"][int(j + row)]["yaw"])            
+            r_squared = poly_reg_model.score(poly_features, chunks["z"][int(j + row)]["yaw"]) 
+            r_values["z"].append(r_squared)
             plt.rcParams.update({'font.size': 6})
             plt.title("r² = " + str(round(r_squared, 3)), fontsize = 13, fontweight = "bold",)
 
@@ -190,22 +194,25 @@ def draw_chunks(chunks):
     # Save Yaw Chunks     
     plt.savefig("../tests/chunks-yaw.png")
 
-    return predictions
+    return predictions, r_values
 
 # Evaluate all chunks
-def evaluate_chunks(fig, predictions):
+def evaluate_chunks(fig, predictions, r_values):
     # Find Steering Ratio and Map values using crazy fucking syntax
     ratio = ((sum(map(lambda x: abs(x), list(predictions["roll"]))) / len(predictions["roll"])) / (sum(map(lambda x: abs(x), list(predictions["yaw"]))) / len(predictions["yaw"])))
     fig.text(0.416, 0.925, "Steering Ratio: " + str(round(ratio, 3)) + ":1", fontsize = 14, fontweight = "bold")
 
-    # Find the error in the predictions
-    # avg_roll = ((sum(map(lambda x: abs(x), list(predictions["roll"])))) / len(predictions["roll"]))
-    # avg_yaw = ((sum(map(lambda x: abs(x) * ratio, list(predictions["yaw"])))) / len(predictions["yaw"]))
-    # if (avg_roll > avg_yaw):
-    #     error = avg_roll - avg_yaw
-    # else:
-    #     error = avg_yaw - avg_roll    
-    # print(error)
+    # Calculate r-values and create predictions
+    r_values_diff = []
+    for i in range(2):
+        r_values_diff.append(1 - abs((1 - r_values["y"][i]) + (1 - r_values["y"][i])))
+
+    smoothness = []
+    for i in range(len(r_values_diff)):
+        smoothness.append(r_values_diff[i] * 10)
+    
+    for i in range(len(smoothness)):
+        fig.text(0.01, 0.6 - (0.05 * i), "Turn " + str(i + 1) + " - " + str(round(smoothness[i], 2)), fontsize = 9, fontweight = "bold")
 
 # Show all plots
 def show_plots():

@@ -50,10 +50,10 @@ idx = graph.point_intersection(df, fig, axs, x, y, z)
 chunks = graph.chunk(df, axs, idx, ERROR_DIST)
 
 # Graph chunks
-predictions = graph.draw_chunks(chunks)
+predictions, r_values = graph.draw_chunks(chunks)
 
 # Evalutate chunks
-graph.evaluate_chunks(fig, predictions)
+graph.evaluate_chunks(fig, predictions, r_values)
 
 # Show plots
 graph.show_plots()
